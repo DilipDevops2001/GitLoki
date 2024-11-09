@@ -19,7 +19,7 @@ data:
 
 <match myapp.logs>
   @type loki
-  loki_url http://loki.default.svc.cluster.local:3100/loki/api/v1/push
+  loki_url http://34.70.241.221:3100/loki/api/v1/push
   labels {
     application=myapp
     environment=dev  # Adjust as needed
