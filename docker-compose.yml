@@ -1,9 +1,23 @@
 version: "3.9"
 services:
   loki:
-    image: grafana/loki:latest # Or specify a version (recommended for stability)
+    image: grafana/loki:latest  # Or specify a version
     ports:
       - "3100:3100"
     volumes:
-      - ./loki-data:/loki-data # Persistent storage (important!)
+      - ./loki-data:/loki-data # Persistent storage for Loki
     restart: unless-stopped
+    # Add Loki configuration if needed (e.g., --config.file=/etc/loki/loki-config.yaml)
+
+  grafana:
+    image: grafana/grafana:latest  # Or specify a version
+    ports:
+      - "3001:3001" # Grafana exposes port 3000, we map it to 3001 on the host
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Replace with a strong password
+    restart: unless-stopped
+volumes:
+  loki_data:
