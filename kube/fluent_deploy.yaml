@@ -15,8 +15,8 @@ spec:
       containers:
       - name: fluentd
         image: fluent/fluentd:v1.17.1-1.1 # Use a specific version for stability
-        command: ["fluentd", "-c", "/fluentd/etc/fluent.conf"] # More common filename
-        resources: # Add resource limits for better resource management
+        command: ["fluentd", "-c", "/fluentd/etc/fluent.conf"]
+        resources:
           limits:
             cpu: 100m
             memory: 256Mi
@@ -30,7 +30,7 @@ spec:
           mountPath: /var/log
       volumes:
       - name: config-volume
-        configMap:
-          name: fluentd-config
+        persistentVolumeClaim:
+          claimName: fluentd-config-pvc
       - name: var-log-volume
         emptyDir: {}
