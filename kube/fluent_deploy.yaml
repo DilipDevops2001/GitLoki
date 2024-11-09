@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: fluentd
-        image: fluent/fluentd:edge-debian-armhf # Use a specific version for stability
+        image: fluent/fluentd:v1.17.1-1.1 # Use a specific version for stability
         command: ["fluentd", "-c", "/fluentd/etc/fluent.conf"] # More common filename
         resources: # Add resource limits for better resource management
           limits:
