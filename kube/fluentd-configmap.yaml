@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+data:
+  fluentd.conf: |
+    <source>
+  @type tail
+  path /var/log/myapp/myapp.log
+  pos_file /var/log/fluentd-myapp.pos
+  tag myapp.logs
+  format none
+  <parse>
+    @type regexp
+    expression /^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?<level>[A-Z]+) (?<message>.*)$/
+    time_format %Y-%m-%d %H:%M:%S
+  </parse>
+</source>
+
+<match myapp.logs>
+  @type loki
+  loki_url http://loki.default.svc.cluster.local:3100/loki/api/v1/push
+  labels {
+    application=myapp
+    environment=dev  # Adjust as needed
+  }
+  format json
+  include_tag_key true
+</match>
+

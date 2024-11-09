@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  loki:
+    image: grafana/loki:latest # Or specify a version (recommended for stability)
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-data:/loki-data # Persistent storage (important!)
+    restart: unless-stopped
