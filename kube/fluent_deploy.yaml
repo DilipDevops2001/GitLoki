@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: fluentd
-        image: fluent/fluentd:v1.14.6 # Use a specific version for stability
+        image: fluent/fluentd:latest # Use a specific version for stability
         command: ["fluentd", "-c", "/fluentd/etc/fluent.conf"] # More common filename
         resources: # Add resource limits for better resource management
           limits:
