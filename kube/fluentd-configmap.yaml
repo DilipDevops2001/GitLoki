@@ -5,26 +5,31 @@ metadata:
 data:
   fluentd.conf: |
     <source>
-  @type tail
-  path /var/log/myapp/myapp.log
-  pos_file /var/log/fluentd-myapp.pos
-  tag myapp.logs
-  format none
-  <parse>
-    @type regexp
-    expression /^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?<level>[A-Z]+) (?<message>.*)$/
-    time_format %Y-%m-%d %H:%M:%S
-  </parse>
-</source>
+      @type tail
+      path /var/log/myapp/*.log # Use wildcard if multiple log files
+      pos_file /var/log/fluentd-myapp.pos
+      tag myapp.logs
+      format none
+      <parse>
+        @type regexp
+        expression /^(?<time>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) (?<level>[A-Z]+) (?<message>.*)$/ # Adjust if needed
+        time_format %Y-%m-%dT%H:%M:%S.%L
+      </parse>
+      buffer_type file
+      buffer_path /var/log/fluentd/buffer
+      flush_interval 1s
+    </source>
 
-<match myapp.logs>
-  @type loki
-  loki_url http://34.70.241.221:3100/loki/api/v1/push
-  labels {
-    application=myapp
-    environment=dev  # Adjust as needed
-  }
-  format json
-  include_tag_key true
-</match>
+    <match myapp.logs>
+      @type loki
+      loki_url http://34.70.241.221:3100/loki/api/v1/push
+      labels application=myapp,environment=dev
+      format json
+      include_tag_key true
+      buffer_type file
+      buffer_path /var/log/fluentd/buffer
+      flush_interval 1s
+      retry_limit 3
+      retry_wait 5s
+    </match>
 

@@ -14,7 +14,15 @@ spec:
     spec:
       containers:
       - name: fluentd
-        image: fluent/fluentd:latest
+        image: fluent/fluentd:v1.14.6 # Use a specific version for stability
+        command: ["fluentd", "-c", "/fluentd/etc/fluent.conf"] # More common filename
+        resources: # Add resource limits for better resource management
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
         volumeMounts:
         - name: config-volume
           mountPath: /fluentd/etc
