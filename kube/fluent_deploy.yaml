@@ -1,66 +1,30 @@
-# fluentd.yaml
-
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: fluentd
-  namespace: fluentd
-  labels:
-    k8s-app: fluentd-logging
-    version: v1
+  name: fluentd-loki
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      k8s-app: fluentd-logging
-      version: v1
+      app: fluentd-loki
   template:
     metadata:
       labels:
-        k8s-app: fluentd-logging
-        version: v1
+        app: fluentd-loki
     spec:
-      serviceAccount: fluentd
-      serviceAccountName: fluentd
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
       containers:
       - name: fluentd
-        imagePullPolicy: "Always"
-        image: saad946/fluentd-demo:latest
-        env:
-          - name:  FLUENT_ELASTICSEARCH_HOST
-            value: "elasticsearch.elastic-kibana"
-          - name:  FLUENT_ELASTICSEARCH_PORT
-            value: "9200"
-          - name: FLUENTD_SYSTEMD_CONF
-            value: disable
-          - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
-            value: /var/log/containers/fluent*
-          - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
-            value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
-        resources:
-          limits:
-            memory: 200Mi
-          requests:
-            cpu: 100m
-            memory: 200Mi
+        image: quay.io/fluentd/fluentd:latest # Or a specific version
+        ports:
+        - containerPort: 24224 # Fluentd's default port
         volumeMounts:
         - name: fluentd-config
-          mountPath: /fluentd/etc
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-      terminationGracePeriodSeconds: 30
+          mountPath: /fluentd/etc/
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
       volumes:
       - name: fluentd-config
         configMap:
-          name: fluentd-config
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
+          name: fluentd-loki-config
