@@ -16,14 +16,19 @@ spec:
       - name: fluentd
         image: fluent/fluentd:v1.16.6-1.0 # Or a specific version
         ports:
-        - containerPort: 24224 # Fluentd's default port
+        - containerPort: 24224
         volumeMounts:
         - name: fluentd-config
-          mountPath: /fluentd/etc/
+          mountPath: /fluentd/etc
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 200m # Increased CPU request
+            memory: 512Mi # Increased memory request
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "curl -f http://localhost:24224 || exit 1"]
+          initialDelaySeconds: 10
+          periodSeconds: 10
       volumes:
       - name: fluentd-config
         configMap:

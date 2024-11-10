@@ -15,7 +15,7 @@ data:
 
     <match kubernetes.var.log>
       @type loki
-      loki_url "http://34.70.241.221:3100/" # Replace with your Loki service
+      loki_url "http://loki-service.default:3100/" # Replace with your Loki service name
       labels {
         job = "kubernetes"
         container = "${container_name}"
@@ -24,8 +24,25 @@ data:
       }
     </match>
 
-    # Add more <match> sections for other log sources as needed.  Example below:
-    <match **>
-      @type stdout
+    # ADD YOUR APPLICATION LOG SECTION HERE!  Example below (customize!):
+    <match app.logs.**>
+      @type tail
+      path /var/log/myapp.log  # <--- CHANGE THIS TO YOUR APPLICATION LOG PATH
+      pos_file /var/log/fluentd.pos
+      tag app.logs
+      <parse>
+        @type multi_format
+        format json # <--- CHANGE THIS TO YOUR LOG FORMAT (e.g., regexp, json, etc.)
+      </parse>
     </match>
 
+    <match app.logs>
+      @type loki
+      loki_url "http://34.70.241.221:3100/" # Replace with your Loki service
+      labels {
+        job = "myapp" # <--- CHANGE THIS TO YOUR APPLICATION'S JOB NAME
+        container = "${container_name}"
+        namespace = "${namespace}"
+        pod = "${pod_name}"
+      }
+    </match>
