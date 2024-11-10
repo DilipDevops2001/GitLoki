@@ -1,22 +1,24 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
-  name: promtail
+  name: fluentd-role
+  namespace: get
 rules:
 - apiGroups: [""]
-  resources: ["pods", "nodes", "namespaces"]
+  resources: ["pods", "pods/log"]
   verbs: ["get", "list", "watch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: promtail
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: promtail
+  name: fluentd-role-binding
+  namespace: get
 subjects:
 - kind: ServiceAccount
-  name: default
-  namespace: logging
+  name: fluentd-sa
+  namespace: get
+roleRef:
+  kind: Role
+  name: fluentd-role
+  apiGroup: rbac.authorization.k8s.io

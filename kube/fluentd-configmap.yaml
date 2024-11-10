@@ -1,48 +1,43 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: promtail-config
-  namespace: logging
+  name: fluentd-config
+  namespace: get
 data:
-  promtail-config.yaml: |
-    server:
-      http_listen_port: 9080
-      grpc_listen_port: 0
+  fluentd.conf: |
+    <source>
+      @type kubernetes_metadata
+      <parse>
+        @type json
+      </parse>
+      tag kubernetes.metadata
+      <buffer>
+        @type file
+        path /var/log/fluentd/kubernetes.metadata
+        flush_interval 1s
+        flush_at_shutdown true
+      </buffer>
+    </source>
 
-    positions:
-      filename: /run/promtail/positions.yaml
+    <source>
+      @type tail
+      path /var/log/containers/*/*.log
+      pos_file /var/log/fluentd/tail.pos
+      tag kubernetes.*
+      <parse>
+        @type multi_format
+        format json
+      </parse>
+      <buffer>
+        @type file
+        path /var/log/fluentd/kubernetes.log
+        flush_interval 1s
+        flush_at_shutdown true
+      </buffer>
+    </source>
 
-    clients:
-      - url: http://34.70.241.221:3100/loki/api/v1/push
-
-    scrape_configs:
-    - job_name: kubernetes-pods
-      pipeline_stages:
-        - docker: {}
-      kubernetes_sd_configs:
-        - role: pod
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_name]
-          target_label: job
-        - source_labels: [__meta_kubernetes_namespace]
-          target_label: namespace
-        - source_labels: [__meta_kubernetes_pod_name]
-          target_label: pod
-        - source_labels: [__meta_kubernetes_pod_container_name]
-          target_label: container
-
-    - job_name: kubernetes-kubelet
-      static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: kubelet
-          __path__: /var/log/kubelet.log
-
-    - job_name: application-logs
-      static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: application
-          __path__: /var/log/application/*.log
+    <match kubernetes.**>
+      @type loki
+      loki_url http://34.70.241.221:3100/loki/api/v1/push # Adjust if your Loki service is different
+      labels namespace: ${kubernetes.namespace}, pod: ${kubernetes.pod.name}, container: ${kubernetes.container.name}
+    </match>

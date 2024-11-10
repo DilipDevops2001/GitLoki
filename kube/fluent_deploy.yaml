@@ -1,40 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: promtail
-  namespace: logging
+  name: fluentd
+  namespace: get
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: promtail
+      app: fluentd
   template:
     metadata:
       labels:
-        name: promtail
+        app: fluentd
     spec:
-      serviceAccountName: promtail-sa
+      serviceAccountName: fluentd-sa
       containers:
-      - name: promtail
-        image: grafana/promtail:latest
-        args:
-          - -config.file=/etc/promtail/promtail-config.yaml
+      - name: fluentd
+        image: fluent/fluentd:v1.17.1-1.1 # Or your chosen image
+        ports:
+        - containerPort: 24224
         volumeMounts:
-          - name: config
-            mountPath: /etc/promtail
-          - name: varlog
-            mountPath: /var/log
-          - name: varlog-application
-            mountPath: /var/log/application
+        - name: fluentd-config
+          mountPath: /fluentd/etc/
+        - name: var-log
+          mountPath: /var/log
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
       volumes:
-        - name: config
-          configMap:
-            name: promtail-config
-        - name: varlog
-          hostPath:
-            path: /var/log
-            type: DirectoryOrCreate
-        - name: varlog-application
-          hostPath:
-            path: /var/log/application
-            type: DirectoryOrCreate
+      - name: fluentd-config
+        configMap:
+          name: fluentd-config
+      - name: var-log
+        emptyDir: {}
