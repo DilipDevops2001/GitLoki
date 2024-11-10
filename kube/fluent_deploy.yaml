@@ -14,22 +14,22 @@ spec:
     spec:
       containers:
       - name: fluentd
-        image: fluent/fluentd:v1.16.6-1.0 # Or a specific version
+        image: fluent/fluentd:v1.16.6-1.0
         ports:
         - containerPort: 24224
         volumeMounts:
-        - name: fluentd-config
+        - name: fluentd-config-test
           mountPath: /fluentd/etc
         resources:
           requests:
-            cpu: 200m # Increased CPU request
-            memory: 512Mi # Increased memory request
+            cpu: 200m
+            memory: 512Mi
         livenessProbe:
           exec:
             command: ["sh", "-c", "curl -f http://localhost:24224 || exit 1"]
           initialDelaySeconds: 10
           periodSeconds: 10
       volumes:
-      - name: fluentd-config
-        configMap:
-          name: fluentd-loki-config
+      - name: fluentd-config-test
+        hostPath:
+          path: /home/sprtndilip99/GitLoki/kube/fluentd.conf # <--- Directory containing fluentd.conf

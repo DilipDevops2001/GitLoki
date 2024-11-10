@@ -15,7 +15,7 @@ data:
 
     <match kubernetes.var.log>
       @type loki
-      loki_url "http://loki-service.default:3100/" # Replace with your Loki service name
+      loki_url "http://34.70.241.221:3100/" # Replace with your Loki service name
       labels {
         job = "kubernetes"
         container = "${container_name}"
