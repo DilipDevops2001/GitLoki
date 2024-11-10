@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: game
+data:
+  config.yaml: |
+    scrape_configs:
+    - job_name: my-logs
+      static_configs:
+      - targets:
+        - localhost # Or your log source
+        labels:
+          job: my-app-logs
+      pipeline_stages:
+      - loki:
+          url: http://34.70.241.221:3100/loki/api/v1/push  # Update with your Loki endpoint

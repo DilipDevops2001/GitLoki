@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promtail
+  namespace: game
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: promtail-sa
+      containers:
+      - name: promtail
+        image: grafana/promtail:latest # Replace with your Promtail image
+        args:
+        - -config.file=/etc/promtail/config.yaml
+        volumeMounts:
+        - name: promtail-config
+          mountPath: /etc/promtail
+        resources:
+          limits:
+            memory: 128Mi
+            cpu: 500m
+          requests:
+            memory: 64Mi
+            cpu: 250m
+      volumes:
+      - name: promtail-config
+        configMap:
+          name: promtail-config
