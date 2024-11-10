@@ -2,23 +2,47 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-config
+  namespace: logging
 data:
   promtail-config.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /run/promtail/positions.yaml
+
+    clients:
+      - url: http://34.70.241.221:3100/loki/api/v1/push
+
     scrape_configs:
-- job_name: kubernetes
-  kubernetes:
-    # ... (Kubernetes configuration as shown above) ...
-- job_name: my-app # Add more jobs for other applications
-  static_configs:
-  - targets:
-    - http://34.68.181.200:3000/ # Replace with your application's address and port
-    labels:
-      job: my-app
-  pipeline_stages:
-  - regex:
-      expression: '^(?<stream>.*)$'
-      source: logs
-  - loki:
-      url: http://34.70.241.221:3100/loki/api/v1/push # Replace with your Loki service URL
-      labels:
-        job: my-app
+    - job_name: kubernetes-pods
+      pipeline_stages:
+        - docker: {}
+      kubernetes_sd_configs:
+        - role: pod
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_name]
+          target_label: job
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - source_labels: [__meta_kubernetes_pod_container_name]
+          target_label: container
+
+    - job_name: kubernetes-kubelet
+      static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: kubelet
+          __path__: /var/log/kubelet.log
+
+    - job_name: application-logs
+      static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: application
+          __path__: /var/log/application/*.log

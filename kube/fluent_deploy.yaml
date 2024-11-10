@@ -2,29 +2,38 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: promtail
+  namespace: logging
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: promtail
+      name: promtail
   template:
     metadata:
       labels:
-        app: promtail
+        name: promtail
     spec:
       containers:
       - name: promtail
-        image: grafana/promtail:latest # Use a specific version if needed
+        image: grafana/promtail:latest
         args:
           - -config.file=/etc/promtail/promtail-config.yaml
         volumeMounts:
-        - name: promtail-config
-          mountPath: /etc/promtail
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
+          - name: config
+            mountPath: /etc/promtail
+          - name: varlog
+            mountPath: /var/log
+          - name: varlog-application
+            mountPath: /var/log/application
       volumes:
-      - name: promtail-config
-        configMap:
-          name: promtail-config
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: DirectoryOrCreate
+        - name: varlog-application
+          hostPath:
+            path: /var/log/application
+            type: DirectoryOrCreate
