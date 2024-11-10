@@ -1,48 +1,52 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fluentd-loki-config
+  name: promtail-config
 data:
-  fluentd.conf: |
-    <source>
-      @type kubernetes_metadata
-      tag kubernetes.var.log
-      <parse>
-        @type multi_format
-        format json
-      </parse>
-    </source>
+  promtail-config.yaml: |
+    scrape_configs:
+    - job_name: kubernetes
+      kubernetes:
+        metadata:
+          namespace: kube-system # Watch the kube-system namespace (adjust as needed)
+        relabel_configs:
+        - source_labels: [__address__]
+          target_label: __address__
+        - source_labels: [kubernetes_namespace]
+          target_label: namespace
+        - source_labels: [kubernetes_pod_name]
+          target_label: pod
+        - source_labels: [kubernetes_container_name]
+          target_label: container
+      static_configs:
+      - targets:
+        - localhost # Promtail listens on all interfaces
+        labels:
+          job: promtail-kubernetes
+      pipeline_stages:
+      - regex:
+          expression: '^(?<stream>.*)$'
+          source: logs
+      - loki:
+          url: http://34.70.241.221:3100/ # Replace with your Loki service URL
+          labels:
+            job: '{{ .job }}'
+            namespace: '{{ .namespace }}'
+            pod: '{{ .pod }}'
+            container: '{{ .container }}'
+    - job_name: my-app # Add more jobs for other applications
+      static_configs:
+      - targets:
+        - localhost
+        labels:
+          job: my-app
+      pipeline_stages:
+      - regex:
+          expression: '^(?<stream>.*)$'
+          source: logs
+      - loki:
+          url: http://loki-service.default:3100/loki/api/v1/push # Replace with your Loki service URL
+          labels:
+            job: my-app
+            namespace: my-namespace # Replace with your namespace
 
-    <match kubernetes.var.log>
-      @type loki
-      loki_url "http://34.70.241.221:3100/" # Replace with your Loki service name
-      labels {
-        job = "kubernetes"
-        container = "${container_name}"
-        namespace = "${namespace}"
-        pod = "${pod_name}"
-      }
-    </match>
-
-    # ADD YOUR APPLICATION LOG SECTION HERE!  Example below (customize!):
-    <match app.logs.**>
-      @type tail
-      path /var/log/myapp.log  # <--- CHANGE THIS TO YOUR APPLICATION LOG PATH
-      pos_file /var/log/fluentd.pos
-      tag app.logs
-      <parse>
-        @type multi_format
-        format json # <--- CHANGE THIS TO YOUR LOG FORMAT (e.g., regexp, json, etc.)
-      </parse>
-    </match>
-
-    <match app.logs>
-      @type loki
-      loki_url "http://34.70.241.221:3100/" # Replace with your Loki service
-      labels {
-        job = "myapp" # <--- CHANGE THIS TO YOUR APPLICATION'S JOB NAME
-        container = "${container_name}"
-        namespace = "${namespace}"
-        pod = "${pod_name}"
-      }
-    </match>

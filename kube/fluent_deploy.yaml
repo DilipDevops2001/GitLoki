@@ -1,35 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fluentd-loki
+  name: promtail
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: fluentd-loki
+      app: promtail
   template:
     metadata:
       labels:
-        app: fluentd-loki
+        app: promtail
     spec:
       containers:
-      - name: fluentd
-        image: fluent/fluentd:v1.16.6-1.0
-        ports:
-        - containerPort: 24224
+      - name: promtail
+        image: grafana/promtail:latest # Use a specific version if needed
+        args:
+          - -config.file=/etc/promtail/promtail-config.yaml
         volumeMounts:
-        - name: fluentd-config-test
-          mountPath: /fluentd/etc
+        - name: promtail-config
+          mountPath: /etc/promtail
         resources:
           requests:
-            cpu: 200m
-            memory: 512Mi
-        livenessProbe:
-          exec:
-            command: ["sh", "-c", "curl -f http://localhost:24224 || exit 1"]
-          initialDelaySeconds: 10
-          periodSeconds: 10
+            cpu: 100m
+            memory: 256Mi
       volumes:
-      - name: fluentd-config-test
-        hostPath:
-          path: /home/sprtndilip99/GitLoki/kube/fluentd.conf # <--- Directory containing fluentd.conf
+      - name: promtail-config
+        configMap:
+          name: promtail-config
