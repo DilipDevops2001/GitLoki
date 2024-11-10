@@ -5,48 +5,20 @@ metadata:
 data:
   promtail-config.yaml: |
     scrape_configs:
-    - job_name: kubernetes
-      kubernetes:
-        metadata:
-          namespace: kube-system # Watch the kube-system namespace (adjust as needed)
-        relabel_configs:
-        - source_labels: [__address__]
-          target_label: __address__
-        - source_labels: [kubernetes_namespace]
-          target_label: namespace
-        - source_labels: [kubernetes_pod_name]
-          target_label: pod
-        - source_labels: [kubernetes_container_name]
-          target_label: container
-      static_configs:
-      - targets:
-        - localhost # Promtail listens on all interfaces
-        labels:
-          job: promtail-kubernetes
-      pipeline_stages:
-      - regex:
-          expression: '^(?<stream>.*)$'
-          source: logs
-      - loki:
-          url: http://34.70.241.221:3100/ # Replace with your Loki service URL
-          labels:
-            job: '{{ .job }}'
-            namespace: '{{ .namespace }}'
-            pod: '{{ .pod }}'
-            container: '{{ .container }}'
-    - job_name: my-app # Add more jobs for other applications
-      static_configs:
-      - targets:
-        - localhost
-        labels:
-          job: my-app
-      pipeline_stages:
-      - regex:
-          expression: '^(?<stream>.*)$'
-          source: logs
-      - loki:
-          url: http://loki-service.default:3100/loki/api/v1/push # Replace with your Loki service URL
-          labels:
-            job: my-app
-            namespace: my-namespace # Replace with your namespace
-
+- job_name: kubernetes
+  kubernetes:
+    # ... (Kubernetes configuration as shown above) ...
+- job_name: my-app # Add more jobs for other applications
+  static_configs:
+  - targets:
+    - http://34.68.181.200:3000/ # Replace with your application's address and port
+    labels:
+      job: my-app
+  pipeline_stages:
+  - regex:
+      expression: '^(?<stream>.*)$'
+      source: logs
+  - loki:
+      url: http://34.70.241.221:3100/loki/api/v1/push # Replace with your Loki service URL
+      labels:
+        job: my-app
