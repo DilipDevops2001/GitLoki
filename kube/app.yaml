@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testford-deployment
+  namespace: logging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testford
+  template:
+    metadata:
+      labels:
+        app: testford
+    spec:
+      containers:
+      - name: testford
+        image: dilipford/testford:latest
+        ports:
+        - containerPort: 3000
